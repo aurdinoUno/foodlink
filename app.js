@@ -6,7 +6,7 @@ const pool = require("./config/pool");
 
 const app = express();
 
-const HOST_NAME = process.env.HOST_NAME || "localhost";
+const HOST_NAME = "0.0.0.0";
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, HOST_NAME, () => {
     console.log("Server is listening for requests!");
