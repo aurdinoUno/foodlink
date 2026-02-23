@@ -1,26 +1,66 @@
-const {Router} = require("express");
+const { Router } = require("express");
 const pool = require("../config/pool");
 
 const router = Router();
 
+// ── Urgency scoring helper ──────────────────────────────────────────────
+// Returns a score 0-130. Higher = more urgent.
+function urgencyScore(listing) {
+    const hoursLeft = (new Date(listing.expiry_time) - Date.now()) / 3600000;
+    const qty = parseInt(listing.quantity) || 0;
+
+    // Time score (max 100)
+    let timeScore;
+    if (hoursLeft <= 0) timeScore = 130; // already expired — still show first
+    else if (hoursLeft <= 2) timeScore = 100;
+    else if (hoursLeft <= 6) timeScore = 70;
+    else if (hoursLeft <= 12) timeScore = 50;
+    else if (hoursLeft <= 24) timeScore = 30;
+    else timeScore = 10;
+
+    // Quantity score (max 30)
+    const quantityScore = Math.min(qty / 2, 30);
+
+    return timeScore + quantityScore;
+}
+
+// Urgency label for display
+function urgencyLabel(score) {
+    if (score >= 100) return { label: 'CRITICAL', color: '#dc3545' };
+    if (score >= 70) return { label: 'HIGH', color: '#fd7e14' };
+    if (score >= 50) return { label: 'MEDIUM', color: '#ffc107' };
+    if (score >= 30) return { label: 'LOW', color: '#28a745' };
+    return { label: 'LOW', color: '#28a745' };
+}
+
 router.get("/dashboard", async (req, res) => {
-    // const {rows} = await pool.query("SELECT listings.*, users.name FROM listings JOIN users ON listings.donor_id = users.id WHERE listings.status='available' ORDER BY listings.created_at DESC");
-    // const {rows} = await pool.query("SELECT listings.*, users.name, users.phone FROM listings JOIN users ON listings.donor_id = users.id ORDER BY expiry_time ASC, quantity DESC, listings.created_at DESC");
-    const users = (await pool.query("SELECT * FROM users")).rows;
-    const listings = (await pool.query("SELECT * FROM listings WHERE status = 'available' ORDER BY expiry_time ASC, quantity DESC, created_at DESC")).rows;
+    const listings = (await pool.query(
+        "SELECT * FROM listings WHERE status = 'available'"
+    )).rows;
 
-    const total_available = parseInt((await pool.query("SELECT COUNT(*) FROM listings WHERE status = 'available'")).rows[0].count);
+    const total_available = listings.length;
 
-    res.render("receiver_dashboard", {listings: listings, total_available: total_available, users: users});
+    // Attach urgency score and label to every listing
+    listings.forEach(l => {
+        l.urgency_score = urgencyScore(l);
+        const u = urgencyLabel(l.urgency_score);
+        l.urgency_label = u.label;
+        l.urgency_color = u.color;
+    });
+
+    // Sort by urgency descending (highest urgency first)
+    listings.sort((a, b) => b.urgency_score - a.urgency_score);
+
+    res.render("receiver_dashboard", { listings, total_available, user: req.session.user });
 });
 
 router.get("/history", async (req, res) => {
     const receiverId = req.session.user.id;
-
-    // const {rows} = await pool.query("SELECT listings.*, pickup_requests.status AS request_status FROM pickup_requests JOIN listings ON pickup_requests.listing_id = listings.id WHERE pickup_requests.ngo_id = $1 ORDER BY listings.created_at DESC", [ngoId]);
-    const listings = (await pool.query("SELECT * FROM listings WHERE receiver_id = ($1) ORDER BY created_at DESC", [receiverId])).rows;
-    
-    res.render("receiver_history", {requests: listings});
+    const listings = (await pool.query(
+        "SELECT * FROM listings WHERE receiver_id = $1 ORDER BY created_at DESC",
+        [receiverId]
+    )).rows;
+    res.render("receiver_history", { requests: listings });
 });
 
 module.exports = router;

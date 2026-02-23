@@ -1,81 +1,425 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
+
 <head>
-    <title>NGO Dashboard</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Receiver Dashboard — FoodLink</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
-    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="/style.css">
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <style>
+        .urgency-badge {
+            display: inline-block;
+            font-size: 0.7rem;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 4px;
+            letter-spacing: .04em;
+            color: white;
+        }
+
+        .urgency-row-CRITICAL {
+            border-left: 3px solid #dc3545 !important;
+        }
+
+        .urgency-row-HIGH {
+            border-left: 3px solid #fd7e14 !important;
+        }
+
+        .urgency-row-MEDIUM {
+            border-left: 3px solid #ffc107 !important;
+        }
+
+        .urgency-row-LOW {
+            border-left: 3px solid #28a745 !important;
+        }
+
+        .smart-sort-bar {
+            background: white;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-bottom: 16px;
+        }
+
+        .routing-info {
+            background: #e8f5e9;
+            border: 1px solid #c3e6cb;
+            border-radius: 8px;
+            padding: 10px 16px;
+            font-size: 0.85rem;
+            margin-bottom: 12px;
+            display: none;
+        }
+
+        #map {
+            height: 400px;
+        }
+    </style>
 </head>
-<body class="container mt-5">
 
-<h2>NGO Dashboard</h2>
-<a href="/receiver/history" class="btn btn-info mb-3">My Pickup Requests</a>
-<a href="/auth/logout" class="btn btn-danger float-end mb-3">Logout</a>
+<body class="bg-light">
 
-<div id="map" style="height: 400px; width: 100%; margin-bottom: 20px;"></div>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-success sticky-top">
+        <div class="container">
+            <a class="navbar-brand" href="#">🍃 FoodLink</a>
+            <div class="ms-auto d-flex gap-2">
+                <a href="/receiver/history" class="btn btn-outline-light btn-sm">My Requests</a>
+                <a href="/auth/logout" class="btn btn-outline-light btn-sm">Logout</a>
+            </div>
+        </div>
+    </nav>
 
-<% if (total_available !== 0){ %>
-    <table class="table table-bordered">
-    <thead>
-        <tr>
-            <th>Donor</th>
-            <th>Food</th>
-            <th>Quantity</th>
-            <th>Expiry</th>
-            <th>Pickup Address</th>
-            <th>Pickup Phone</th>
-            <th>Pickup Time</th>
-            <th>Status</th>
-            <th>Action</th>
-        </tr>
-    </thead>
-    <tbody>
-    <% listings.forEach((listing) => { %>
-        <tr>
-            <td><%= listing.donor_name %></td>
-            <td><%= listing.food_description %></td>
-            <td><%= listing.quantity %></td>
-            <td><%= listing.expiry_time %></td>
-            <td><%= listing.pickup_address %></td>
-            <td><%= listing.pickup_phone %></td>
-            <td><%= listing.pickup_time %></td>
-            <td><%= listing.status %></td>
-            <td><a href="/listing/<%= listing.id %>">See More</a></td>
-        </tr>
-    <% }) %>
-    </tbody>
-    </table>
-<% } else if (total_available === 0){ %>
-    <p>No avialabe listings!</p>
-<% } %>
+    <div class="container py-4">
+        <h4 class="page-title">Receiver Dashboard</h4>
 
-<script>
-    const listings = <%- JSON.stringify(listings) %>;
+        <!-- Stats -->
+        <div class="row g-3 mb-4">
+            <div class="col-md-3">
+                <div class="stat-card green">
+                    <div class="stat-number">
+                        <%= total_available %>
+                    </div>
+                    <div class="stat-label">Available Listings</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card" style="border-left-color:#dc3545;">
+                    <div class="stat-number" style="color:#dc3545;">
+                        <%= listings.filter(l=>l.urgency_label==='CRITICAL').length %>
+                    </div>
+                    <div class="stat-label">🔴 Critical Urgency</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card orange">
+                    <div class="stat-number">
+                        <%= listings.filter(l=>l.urgency_label==='HIGH').length %>
+                    </div>
+                    <div class="stat-label">🟠 High Urgency</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card blue">
+                    <div class="stat-number">
+                        <%= listings.reduce((a,l)=>a+(parseInt(l.quantity)||0),0) %>
+                    </div>
+                    <div class="stat-label">Total Units Available</div>
+                </div>
+            </div>
+        </div>
 
-    let centerLat = 28.6;
-    let centerLng = 77.2;
-    const map = L.map('map').setView([centerLat, centerLng], 10);
+        <!-- Smart Sort Bar -->
+        <div class="smart-sort-bar">
+            <span class="fw-semibold" style="font-size:0.85rem;">🧠 Smart Routing:</span>
+            <button class="btn btn-sm btn-outline-secondary" onclick="sortBy('urgency')" id="btn-urgency">⚡ Urgency
+                (Default)</button>
+            <button class="btn btn-sm btn-outline-secondary" onclick="sortBy('expiry')" id="btn-expiry">⏰ Expiry
+                Time</button>
+            <button class="btn btn-sm btn-outline-secondary" onclick="sortBy('quantity')" id="btn-quantity">📦
+                Quantity</button>
+            <button class="btn btn-sm btn-success" onclick="enableDistanceSort()" id="btn-distance">📍 Distance from
+                Me</button>
+            <span class="ms-auto text-muted small" id="sortLabel">Sorted by: Urgency Score</span>
+        </div>
 
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; OpenStreetMap contributors'
-    }).addTo(map);
+        <div class="routing-info" id="routingInfo">
+            📍 <strong>Distance routing active</strong> — listings sorted by full urgency score including your distance.
+            Click any map marker to see the route to that pickup point.
+        </div>
 
-    listings.forEach(listing => {
-        if (listing.latitude && listing.longitude) {
+        <!-- Enhanced Map -->
+        <div class="bg-white rounded-3 shadow-sm overflow-hidden mb-4" style="border:1px solid #dee2e6;">
+            <div class="d-flex align-items-center px-3 py-2 border-bottom">
+                <span class="fw-semibold" style="font-size:0.85rem;">🗺️ Live Availability Map</span>
+                <div class="ms-auto d-flex gap-3" style="font-size:0.75rem;">
+                    <span><span style="color:#dc3545;">●</span> Critical</span>
+                    <span><span style="color:#fd7e14;">●</span> High</span>
+                    <span><span style="color:#ffc107;">●</span> Medium</span>
+                    <span><span style="color:#28a745;">●</span> Low</span>
+                    <span><span style="color:#0d6efd;">●</span> You</span>
+                </div>
+            </div>
+            <div id="map" style="height:420px;"></div>
+        </div>
 
-            const marker = L.marker([
-                parseFloat(listing.latitude),
-                parseFloat(listing.longitude)
-            ]).addTo(map);
+        <!-- Listings Table -->
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h6 class="fw-semibold text-muted text-uppercase mb-0" style="font-size:0.8rem; letter-spacing:.04em;">
+                Available Food Listings</h6>
+        </div>
+
+        <% if (total_available !==0) { %>
+            <div class="bg-white rounded-3 shadow-sm overflow-hidden">
+                <table class="table table-hover mb-0" id="listingsTable">
+                    <thead>
+                        <tr>
+                            <th style="width:90px;">Urgency</th>
+                            <th>Donor</th>
+                            <th>Food Item</th>
+                            <th>Qty</th>
+                            <th>Expires In</th>
+                            <th>Pickup Address</th>
+                            <th>Phone</th>
+                            <th id="distCol" style="display:none;">Distance</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody id="listingsBody">
+                        <% listings.forEach(listing=> { %>
+                            <tr class="urgency-row-<%= listing.urgency_label %>"
+                                data-urgency="<%= listing.urgency_score %>"
+                                data-expiry="<%= new Date(listing.expiry_time).getTime() %>"
+                                data-quantity="<%= listing.quantity %>" data-lat="<%= listing.latitude %>"
+                                data-lng="<%= listing.longitude %>" data-dist="9999" data-id="<%= listing.id %>">
+                                <td>
+                                    <span class="urgency-badge" style="background:<%= listing.urgency_color %>;">
+                                        <%= listing.urgency_label %>
+                                    </span>
+                                </td>
+                                <td class="fw-medium text-success">
+                                    <%= listing.donor_name %>
+                                </td>
+                                <td class="fw-medium">
+                                    <%= listing.food_description %>
+                                </td>
+                                <td><strong>
+                                        <%= listing.quantity %>
+                                    </strong></td>
+                                <td class="<%= listing.urgency_label === 'CRITICAL' ? 'text-danger fw-bold' : listing.urgency_label === 'HIGH' ? 'text-warning-emphasis' : 'text-muted' %>"
+                                    style="font-size:0.82rem;"
+                                    data-expiry-ms="<%= new Date(listing.expiry_time).getTime() %>">
+                                    <span class="countdown"
+                                        data-expiry="<%= new Date(listing.expiry_time).getTime() %>">--</span>
+                                </td>
+                                <td class="text-muted"
+                                    style="max-width:150px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
+                                    <%= listing.pickup_address %>
+                                </td>
+                                <td class="text-muted">
+                                    <%= listing.pickup_phone %>
+                                </td>
+                                <td class="dist-cell" style="display:none;" data-dist-id="<%= listing.id %>">--</td>
+                                <td>
+                                    <a href="/listing/<%= listing.id %>"
+                                        class="btn btn-success btn-sm fw-semibold">Claim</a>
+                                </td>
+                            </tr>
+                            <% }) %>
+                    </tbody>
+                </table>
+            </div>
+            <% } else { %>
+                <div class="bg-white rounded-3 shadow-sm p-5 text-center">
+                    <div style="font-size:2.5rem;">🔍</div>
+                    <h5 class="mt-3">No listings available right now</h5>
+                    <p class="text-muted">Check back soon — donors are actively listing surplus food.</p>
+                </div>
+                <% } %>
+    </div>
+
+    <script>
+        const listings = <% - JSON.stringify(listings) %>;
+        let userLat = null, userLng = null;
+        let map, userMarker, routeLine;
+        const markers = {};
+
+        // ── MAP SETUP ──────────────────────────────────────────────────────────
+        let centerLat = 20.59, centerLng = 78.96;
+        if (listings.length > 0 && listings[0].latitude) {
+            centerLat = parseFloat(listings[0].latitude);
+            centerLng = parseFloat(listings[0].longitude);
+        }
+
+        map = L.map('map').setView([centerLat, centerLng], 10);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+        }).addTo(map);
+
+        // Color based on urgency
+        function markerColor(urgencyLabel) {
+            return { CRITICAL: '#dc3545', HIGH: '#fd7e14', MEDIUM: '#ffc107', LOW: '#28a745' }[urgencyLabel] || '#28a745';
+        }
+
+        // Draw all listing markers
+        const bounds = [];
+        listings.forEach(l => {
+            if (!l.latitude || !l.longitude) return;
+            const lat = parseFloat(l.latitude), lng = parseFloat(l.longitude);
+            bounds.push([lat, lng]);
+
+            const hoursLeft = Math.max(0, (new Date(l.expiry_time) - Date.now()) / 3600000);
+            const expiryText = hoursLeft < 1
+                ? `${Math.round(hoursLeft * 60)}m left`
+                : `${hoursLeft.toFixed(1)}h left`;
+
+            const marker = L.circleMarker([lat, lng], {
+                radius: 10,
+                color: markerColor(l.urgency_label),
+                fillColor: markerColor(l.urgency_label),
+                fillOpacity: 0.85,
+                weight: 2
+            }).addTo(map);
 
             marker.bindPopup(`
-                <strong>${listing.food_description}</strong><br>
-                Quantity: ${listing.quantity}<br>
-                Address: ${listing.pickup_address}
-            `);
-        }
-    });
-</script>
+            <div style="min-width:200px;font-family:'Inter',sans-serif;">
+                <div style="font-weight:700;font-size:0.95rem;margin-bottom:4px;">${l.food_description}</div>
+                <div style="font-size:0.8rem;color:#555;margin-bottom:6px;">
+                    <span style="background:${markerColor(l.urgency_label)};color:white;padding:1px 6px;border-radius:3px;font-size:0.7rem;">
+                        ${l.urgency_label}
+                    </span>
+                </div>
+                <table style="font-size:0.8rem;width:100%;border-collapse:collapse;">
+                    <tr><td style="color:#888;padding:1px 0;">Donor</td><td style="font-weight:600;">${l.donor_name}</td></tr>
+                    <tr><td style="color:#888;">Quantity</td><td><strong>${l.quantity}</strong> units</td></tr>
+                    <tr><td style="color:#888;">Expires</td><td style="color:${l.urgency_label === 'CRITICAL' ? '#dc3545' : '#555'};">${expiryText}</td></tr>
+                    <tr><td style="color:#888;">Address</td><td>${l.pickup_address.substring(0, 40)}...</td></tr>
+                </table>
+                <div style="margin-top:8px;display:flex;gap:6px;">
+                    <a href="/listing/${l.id}" style="background:#28a745;color:white;padding:4px 12px;border-radius:4px;text-decoration:none;font-size:0.8rem;font-weight:600;">
+                        Claim
+                    </a>
+                    <button onclick="routeTo(${lat},${lng},'${l.food_description}')"
+                        style="background:#0d6efd;color:white;padding:4px 12px;border-radius:4px;border:none;font-size:0.8rem;cursor:pointer;">
+                        📍 Route
+                    </button>
+                </div>
+            </div>
+        `);
 
+            markers[l.id] = marker;
+        });
+
+        if (bounds.length > 1) map.fitBounds(bounds, { padding: [30, 30] });
+
+        // ── ROUTING: draw straight line ────────────────────────────────────────
+        function routeTo(lat, lng, name) {
+            if (!userLat) {
+                alert('Enable "Distance from Me" first to use routing.');
+                return;
+            }
+            if (routeLine) map.removeLayer(routeLine);
+            routeLine = L.polyline([[userLat, userLng], [lat, lng]], {
+                color: '#0d6efd', weight: 3, dashArray: '8 6', opacity: 0.8
+            }).addTo(map);
+            map.fitBounds([[userLat, userLng], [lat, lng]], { padding: [40, 40] });
+
+            const dist = haversine(userLat, userLng, lat, lng).toFixed(1);
+            L.popup()
+                .setLatLng([lat, lng])
+                .setContent(`<strong>${name}</strong><br>📏 ${dist} km from you`)
+                .openOn(map);
+        }
+
+        // ── COUNTDOWN TIMER ─────────────────────────────────────────────────
+        function updateCountdowns() {
+            document.querySelectorAll('.countdown').forEach(el => {
+                const expiry = parseInt(el.dataset.expiry);
+                const diff = expiry - Date.now();
+                if (diff <= 0) { el.textContent = 'EXPIRED'; el.style.color = '#dc3545'; return; }
+                const h = Math.floor(diff / 3600000);
+                const m = Math.floor((diff % 3600000) / 60000);
+                el.textContent = h > 0 ? `${h}h ${m}m` : `${m}m`;
+            });
+        }
+        updateCountdowns();
+        setInterval(updateCountdowns, 60000);
+
+        // ── HAVERSINE DISTANCE ─────────────────────────────────────────────
+        function haversine(lat1, lng1, lat2, lng2) {
+            const R = 6371;
+            const dLat = (lat2 - lat1) * Math.PI / 180;
+            const dLng = (lng2 - lng1) * Math.PI / 180;
+            const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLng / 2) ** 2;
+            return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        }
+
+        // ── DISTANCE SORT ────────────────────────────────────────────────────
+        function enableDistanceSort() {
+            const btn = document.getElementById('btn-distance');
+            btn.textContent = '⏳ Getting location...';
+            btn.disabled = true;
+
+            navigator.geolocation.getCurrentPosition(pos => {
+                userLat = pos.coords.latitude;
+                userLng = pos.coords.longitude;
+
+                // Add user marker
+                if (userMarker) map.removeLayer(userMarker);
+                userMarker = L.circleMarker([userLat, userLng], {
+                    radius: 10, color: '#0d6efd', fillColor: '#0d6efd', fillOpacity: 1, weight: 3
+                }).addTo(map).bindPopup('📍 <strong>Your Location</strong>').openPopup();
+
+                // Update distances on each row
+                document.querySelectorAll('#listingsBody tr').forEach(row => {
+                    const lat = parseFloat(row.dataset.lat);
+                    const lng = parseFloat(row.dataset.lng);
+                    if (!lat || !lng) return;
+                    const d = haversine(userLat, userLng, lat, lng);
+                    row.dataset.dist = d;
+                    const distCell = row.querySelector('.dist-cell');
+                    if (distCell) distCell.textContent = d.toFixed(1) + ' km';
+                });
+
+                // Show distance column
+                document.querySelectorAll('.dist-cell').forEach(c => c.style.display = '');
+                document.getElementById('distCol').style.display = '';
+                document.getElementById('routingInfo').style.display = 'block';
+
+                btn.textContent = '📍 Distance from Me ✓';
+                btn.classList.remove('btn-success');
+                btn.classList.add('btn-primary');
+                btn.disabled = false;
+
+                sortBy('distance');
+            }, () => {
+                btn.textContent = '📍 Location denied';
+                btn.disabled = false;
+            });
+        }
+
+        // ── TABLE SORT ───────────────────────────────────────────────────────
+        function sortBy(mode) {
+            const body = document.getElementById('listingsBody');
+            const rows = Array.from(body.querySelectorAll('tr'));
+            const labels = { urgency: '⚡ Urgency Score', expiry: '⏰ Expiry Time', quantity: '📦 Quantity (High→Low)', distance: '📍 Distance + Urgency' };
+            document.getElementById('sortLabel').textContent = 'Sorted by: ' + (labels[mode] || mode);
+
+            // Highlight active button
+            ['urgency', 'expiry', 'quantity', 'distance'].forEach(m => {
+                const b = document.getElementById('btn-' + m);
+                if (b) { b.classList.remove('btn-success', 'btn-primary', 'btn-dark'); b.classList.add('btn-outline-secondary'); }
+            });
+            const activeBtn = document.getElementById('btn-' + mode);
+            if (activeBtn) { activeBtn.classList.remove('btn-outline-secondary'); activeBtn.classList.add(mode === 'distance' ? 'btn-primary' : 'btn-success'); }
+
+            rows.sort((a, b) => {
+                if (mode === 'urgency') return parseFloat(b.dataset.urgency) - parseFloat(a.dataset.urgency);
+                if (mode === 'expiry') return parseFloat(a.dataset.expiry) - parseFloat(b.dataset.expiry);
+                if (mode === 'quantity') return parseFloat(b.dataset.quantity) - parseFloat(a.dataset.quantity);
+                if (mode === 'distance') {
+                    // Combined score: urgency - (distance * 3), so close + urgent wins
+                    const scoreA = parseFloat(a.dataset.urgency) - parseFloat(a.dataset.dist) * 3;
+                    const scoreB = parseFloat(b.dataset.urgency) - parseFloat(b.dataset.dist) * 3;
+                    return scoreB - scoreA;
+                }
+            });
+            rows.forEach(r => body.appendChild(r));
+        }
+
+        // Default: urgency sort active
+        document.getElementById('btn-urgency').classList.remove('btn-outline-secondary');
+        document.getElementById('btn-urgency').classList.add('btn-success');
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
+
 </html>

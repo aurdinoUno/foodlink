@@ -1,4 +1,4 @@
-const {Router} = require("express");
+const { Router } = require("express");
 const bcrypt = require("bcrypt");
 const pool = require("../config/pool");
 
@@ -9,7 +9,7 @@ router.get("/sign-up", (req, res) => {
 });
 
 router.post("/sign-up", async (req, res) => {
-    const {name, email, password, phone, address, role, donor_subtype, fssai_id, receiver_subtype, receiver_id, govt_id, district, state, pincode} = req.body;
+    const { name, email, password, phone, address, role, donor_subtype, fssai_id, receiver_subtype, receiver_id, govt_id, district, state, pincode } = req.body;
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
@@ -33,25 +33,25 @@ router.get("/login", (req, res) => {
 });
 
 router.post("/login", async (req, res) => {
-    const {email, password} = req.body;
+    const { email, password } = req.body;
 
-    const {rows} = await pool.query("SELECT * FROM users WHERE email = ($1)", [email]);
-    if (rows.length === 0){
-        res.redirect("/auth/sign-up");
+    const { rows } = await pool.query("SELECT * FROM users WHERE email = ($1)", [email]);
+    if (rows.length === 0) {
+        return res.redirect("/auth/sign-up");
     }
     const user = rows[0];
 
-    const match = bcrypt.compare(password, user.password);
-    if (!match){
-        res.redirect("/auth/login");
+    const match = await bcrypt.compare(password, user.password);
+    if (!match) {
+        return res.redirect("/auth/login");
     }
 
     req.session.user = user;
 
-    if (user.role === "donor"){
+    if (user.role === "donor") {
         res.redirect("/donor/dashboard");
     }
-    if (user.role == "receiver"){
+    if (user.role == "receiver") {
         res.redirect("/receiver/dashboard");
     }
 });

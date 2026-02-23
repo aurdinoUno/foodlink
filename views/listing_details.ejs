@@ -1,79 +1,232 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
+
 <head>
-    <title>Listing Details</title>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
-    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Listing Details — FoodLink</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <link rel="stylesheet" href="/style.css">
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 </head>
-<body class="container mt-5">
 
-<a href="javascript:history.back()" class="btn btn-secondary mb-3">Back</a>
+<body class="bg-light">
 
-<h2>Listing Details</h2>
-<div class="card p-4 mb-4">
-    <h4><%= listing.food_description %></h4>
-    <p><strong>Created At:</strong> <%= listing.created_at %></p>
-    <p><strong>Donor:</strong> <%= listing.donor_name %></p>
-    <p><strong>Quantity:</strong> <%= listing.quantity %></p>
-    <p><strong>Expiry:</strong> <%= listing.expiry_time %></p>
-    <p><strong>Pickup Address:</strong> <%= listing.pickup_address %></p>
-    <p><strong>Pickup Phone:</strong> <%= listing.pickup_phone %></p>
-    <p><strong>Pickup Time:</strong> <%= listing.pickup_time %></p>
-    <% if (user_role === "donor"){ %>
-        <p><strong>Listing Status: <%= listing.status %></strong></p>
-    <% } %>
-</div>
+    <nav class="navbar navbar-dark bg-success">
+        <div class="container">
+            <a href="javascript:history.back()" class="navbar-brand" style="font-size:1rem;">← Back</a>
+            <span class="navbar-brand">🍃 FoodLink</span>
+            <div></div>
+        </div>
+    </nav>
 
-<% if (pickup_request){ %>
-<h2>Pickup Details</h2>
-<div class="card p-4 mb-4">
-    <p><strong>Requested By:</strong> <%= pickup_request.contact_person %></p>
-    <p><strong>Phone No:</strong> <%= pickup_request.contact_phone %></p>
-    <p><strong>Created At:</strong> <%= pickup_request.created_at %></p>
-    <% if (user_role === "receiver"){ %>
-        <p><strong>Request Status: <%= pickup_request.status %></strong></p>
-    <% } %>
-</div>
-<% } else { %>
-    <p>No pickup requests!</p>
-<% } %>
+    <div class="container py-4">
+        <h4 class="page-title">Listing Details</h4>
 
-<% if (user_role === "receiver" && listing.status === "available"){ %>
-    <form action="/listing/<%= listing.id %>/request" method="POST">
-        <button class="btn btn-primary mb-3">Request Pickup</button>
-    </form>
-<% } %>
+        <div class="row g-4">
+            <!-- Food Info Card -->
+            <div class="col-md-6">
+                <div class="bg-white rounded-3 shadow-sm p-4 h-100">
+                    <h5 class="fw-bold mb-3 text-success">📦 Food Information</h5>
+                    <h4 class="fw-bold mb-3">
+                        <%= listing.food_description %>
+                    </h4>
 
-<% if (user_role === "donor" && listing.status === "requested"){ %>
-    <form action="/listing/<%= listing.id %>/approve" method="POST">
-        <button class="btn btn-primary mb-3">Approve Pickup</button>
-    </form>
-<% } %>
+                    <table class="table table-sm table-borderless mb-0">
+                        <tr>
+                            <td class="text-muted" style="width:140px;">Donated by</td>
+                            <td class="fw-medium text-success">
+                                <%= listing.donor_name %>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted">Quantity</td>
+                            <td><strong>
+                                    <%= listing.quantity %>
+                                </strong> units</td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted">Expiry</td>
+                            <td class="text-warning-emphasis">
+                                <%= new Date(listing.expiry_time).toLocaleString('en-IN', {dateStyle:'medium',
+                                    timeStyle:'short'}) %>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted">Pickup Time</td>
+                            <td>
+                                <%= new Date(listing.pickup_time).toLocaleString('en-IN', {dateStyle:'medium',
+                                    timeStyle:'short'}) %>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted">Address</td>
+                            <td>
+                                <%= listing.pickup_address %>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted">Contact</td>
+                            <td>
+                                <%= listing.pickup_phone %>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted">Listed On</td>
+                            <td class="text-muted">
+                                <%= new Date(listing.created_at).toLocaleDateString('en-IN', {dateStyle:'medium'}) %>
+                            </td>
+                        </tr>
+                        <% if (user_role==='donor' ) { %>
+                            <tr>
+                                <td class="text-muted">Status</td>
+                                <td>
+                                    <% if (listing.status==='available' ) { %><span
+                                            class="badge badge-available">Available</span>
+                                        <% } else if (listing.status==='requested' ) { %><span
+                                                class="badge badge-requested">Requested</span>
+                                            <% } else if (listing.status==='approved' ) { %><span
+                                                    class="badge badge-approved">Approved</span>
+                                                <% } else { %><span class="badge badge-picked">Picked Up</span>
+                                                    <% } %>
+                                </td>
+                            </tr>
+                            <% } %>
+                    </table>
+                </div>
+            </div>
 
-<% if (user_role === "receiver" && listing.status === "approved"){ %>
-    <form action="/listing/<%= listing.id %>/complete" method="POST">
-        <button class="btn btn-primary mb-3">Complete Pickup</button>
-    </form>
-<% } %>
+            <!-- Pickup Request + Actions -->
+            <div class="col-md-6 d-flex flex-column gap-3">
+                <% if (pickup_request) { %>
+                    <div class="bg-white rounded-3 shadow-sm p-4">
+                        <h5 class="fw-bold mb-3 text-success">🤝 Pickup Request</h5>
+                        <table class="table table-sm table-borderless mb-0">
+                            <tr>
+                                <td class="text-muted" style="width:140px;">Requested By</td>
+                                <td class="fw-medium">
+                                    <%= pickup_request.contact_person %>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="text-muted">Phone</td>
+                                <td>
+                                    <%= pickup_request.contact_phone %>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="text-muted">Requested On</td>
+                                <td class="text-muted">
+                                    <%= new Date(pickup_request.created_at).toLocaleDateString('en-IN') %>
+                                </td>
+                            </tr>
+                            <% if (user_role==='receiver' ) { %>
+                                <tr>
+                                    <td class="text-muted">Status</td>
+                                    <td>
+                                        <% if (pickup_request.status==='pending' ) { %><span
+                                                class="badge badge-pending">Pending</span>
+                                            <% } else if (pickup_request.status==='approved' ) { %><span
+                                                    class="badge badge-approved">Approved</span>
+                                                <% } else { %><span class="badge badge-complete">Complete</span>
+                                                    <% } %>
+                                    </td>
+                                </tr>
+                                <% } %>
+                        </table>
+                    </div>
+                    <% } else { %>
+                        <div class="bg-white rounded-3 shadow-sm p-4 text-center text-muted">
+                            <div style="font-size:2rem;">📭</div>
+                            <p class="mb-0 mt-2 small">No pickup requests yet — waiting for an NGO to claim this
+                                listing.</p>
+                        </div>
+                        <% } %>
 
-<div id="map" style="height: 400px;"></div>
+                            <!-- Action Buttons -->
+                            <% if (user_role==='receiver' && listing.status==='available' ) { %>
+                                <form action="/listing/<%= listing.id %>/request" method="POST">
+                                    <button class="btn btn-success w-100 fw-semibold">🤝 Request Pickup</button>
+                                </form>
+                                <% } %>
 
-<script>
-    const map = L.map('map').setView(
-        [<%= listing.latitude %>, <%= listing.longitude %>], 
-        13
-    );
+                                    <% if (user_role==='donor' && listing.status==='requested' ) { %>
+                                        <form action="/listing/<%= listing.id %>/approve" method="POST">
+                                            <button class="btn btn-primary w-100 fw-semibold">✓ Approve Pickup</button>
+                                        </form>
+                                        <% } %>
 
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; OpenStreetMap contributors'
-    }).addTo(map);
+                                            <% if (user_role==='receiver' && listing.status==='approved' ) { %>
+                                                <form action="/listing/<%= listing.id %>/complete" method="POST"
+                                                    id="completeForm">
+                                                    <div class="bg-white rounded-3 border p-3 mb-2">
+                                                        <label class="d-flex align-items-start gap-2 mb-0"
+                                                            style="cursor:pointer;">
+                                                            <input type="checkbox" id="confirmPickup"
+                                                                onchange="toggleCompleteBtn()" class="mt-1"
+                                                                style="accent-color:#28a745;">
+                                                            <span class="small">I confirm that the food has been
+                                                                physically picked up and received in good
+                                                                condition.</span>
+                                                        </label>
+                                                    </div>
+                                                    <button id="completeBtn" class="btn btn-success w-100 fw-semibold"
+                                                        disabled style="opacity:0.5; cursor:not-allowed;">
+                                                        ✔ Mark as Picked Up
+                                                    </button>
+                                                </form>
+                                                <% } %>
+            </div>
+        </div>
 
-    L.marker([<%= listing.latitude %>, <%= listing.longitude %>])
-        .addTo(map)
-        .bindPopup("<strong><%= listing.food_description %></strong>")
-        .openPopup();
-</script>
+        <!-- Map -->
+        <div class="map-container mt-4">
+            <div id="map"></div>
+        </div>
+    </div>
 
+    <script>
+        const map = L.map('map').setView([<%= listing.latitude %>, <%= listing.longitude %>], 15);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+        }).addTo(map);
+
+        // Custom styled marker icon
+        const icon = L.divIcon({
+            className: '',
+            html: `<div style="background:#28a745;width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+                    font-size:18px;border:3px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.3);">🍱</div>`,
+            iconSize: [36, 36],
+            iconAnchor: [18, 18]
+        });
+
+        L.marker([<%= listing.latitude %>, <%= listing.longitude %>], { icon })
+            .addTo(map)
+            .bindPopup(`
+            <div style="min-width:200px;font-family:'Inter',sans-serif;">
+                <div style="font-weight:700;font-size:0.9rem;margin-bottom:6px;">📦 <%= listing.food_description %></div>
+                <div style="font-size:0.8rem;color:#555;margin-bottom:4px;">📍 <%= listing.pickup_address %></div>
+                <div style="font-size:0.8rem;color:#555;margin-bottom:8px;">📞 <%= listing.pickup_phone %></div>
+                <a href="https://www.google.com/maps/dir/?api=1&destination=<%= listing.latitude %>,<%= listing.longitude %>"
+                   target="_blank"
+                   style="background:#0d6efd;color:white;padding:4px 10px;border-radius:4px;text-decoration:none;font-size:0.78rem;font-weight:600;">
+                    🗺️ Get Directions
+                </a>
+            </div>
+        `, { maxWidth: 260 })
+            .openPopup();
+
+        function toggleCompleteBtn() {
+            const cb = document.getElementById('confirmPickup');
+            const btn = document.getElementById('completeBtn');
+            if (!cb || !btn) return;
+            btn.disabled = !cb.checked;
+            btn.style.opacity = cb.checked ? '1' : '0.5';
+            btn.style.cursor = cb.checked ? 'pointer' : 'not-allowed';
+        }
+    </script>
 </body>
+
 </html>

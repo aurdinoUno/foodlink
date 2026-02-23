@@ -1,95 +1,453 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
+
 <head>
-    <title>Donor Dashboard</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Donor Dashboard — FoodLink</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <link rel="stylesheet" href="/style.css">
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-</head>
-<body class="container mt-5">
-
-<h2>Donor Dashboard</h2>
-
-<a href="/listing/create" class="btn btn-primary mb-3">Create New Listing</a>
-<a href="/donor/history" class="btn btn-info mb-3">View All Listings</a>
-<a href="/auth/logout" class="btn btn-danger mb-3 float-end">Logout</a>
-
-<div id="donorMap" style="height: 400px; width: 100%; margin-bottom: 20px;"></div>
-
-<% if (total_active !== 0){ %>
-<table class="table table-bordered">
-    <thead>
-        <tr>
-            <th>Food</th>
-            <th>Quantity</th>
-            <th>Expiry Time</th>
-            <th>Pickup Address</th>
-            <th>Pickup Phone</th>
-            <th>Pickup Time</th>
-            <th>Created At</th>
-            <th>Details</th>
-        </tr>
-    </thead>
-    <tbody>
-        <% listings.forEach(listing => { %>
-            <tr>
-                <td><%= listing.food_description %></td>
-                <td><%= listing.quantity %></td>
-                <td><%= listing.expiry_time %></td>
-                <td><%= listing.pickup_address %></td>
-                <td><%= listing.pickup_phone %></td>
-                <td><%= listing.pickup_time %></td>
-                <td><%= listing.created_at %></td>
-                <td><a href="/listing/<%= listing.id %>">See More</a></td>
-            </tr>
-        <% }) %>
-    </tbody>
-</table>
-<% } else { %>
-    <p>No active listings!</p>
-<% } %>
-
-<script>
-    const listings = <%- JSON.stringify(listings) %>;
-
-    let centerLat = 28.6;
-    let centerLng = 77.2;
-
-    if (listings.length > 0 && listings[0].latitude) {
-        centerLat = parseFloat(listings[0].latitude);
-        centerLng = parseFloat(listings[0].longitude);
-    }
-
-    const map = L.map('donorMap').setView([centerLat, centerLng], 10);
-
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; OpenStreetMap contributors'
-    }).addTo(map);
-
-    listings.forEach(listing => {
-        if (listing.latitude && listing.longitude) {
-
-            let statusColor = "blue";
-
-            if (listing.status === "requested") statusColor = "orange";
-            if (listing.status === "picked") statusColor = "green";
-
-            const marker = L.circleMarker([
-                parseFloat(listing.latitude),
-                parseFloat(listing.longitude)
-            ], {
-                color: statusColor,
-                radius: 8
-            }).addTo(map);
-
-            marker.bindPopup(`
-                <strong>${listing.food_description}</strong><br>
-                Quantity: ${listing.quantity}<br>
-                Status: ${listing.status}<br>
-                Address: ${listing.pickup_address}
-            `);
+    <!-- jsPDF for certificate generation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        .credits-badge {
+            background: linear-gradient(135deg, #1a7a3c, #28a745);
+            color: white;
+            border-radius: 12px;
+            padding: 20px 24px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
         }
-    });
-</script>
+
+        .rank-badge {
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .leaderboard-row:hover {
+            background: #f0faf4;
+        }
+
+        .my-row {
+            background: #e8f5e9 !important;
+            font-weight: 600;
+        }
+    </style>
+</head>
+
+<body class="bg-light">
+
+    <nav class="navbar navbar-expand-lg navbar-dark bg-success sticky-top">
+        <div class="container">
+            <a class="navbar-brand" href="#">🍃 FoodLink</a>
+            <div class="ms-auto d-flex gap-2">
+                <a href="/listing/create" class="btn btn-light btn-sm fw-semibold">+ New Listing</a>
+                <a href="/donor/history" class="btn btn-outline-light btn-sm">All Listings</a>
+                <a href="/auth/logout" class="btn btn-outline-light btn-sm">Logout</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container py-4">
+        <h4 class="page-title">Donor Dashboard</h4>
+
+        <!-- ── Personal Impact Stats ── -->
+        <div class="row g-3 mb-4">
+            <div class="col-md-3">
+                <div class="stat-card green">
+                    <div class="stat-number">
+                        <%= total_active %>
+                    </div>
+                    <div class="stat-label">Active Listings</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card green">
+                    <div class="stat-number">
+                        <%= myMeals %>
+                    </div>
+                    <div class="stat-label">🍽️ Total Meals Donated</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card blue">
+                    <div class="stat-number">
+                        <%= myCO2 %> kg
+                    </div>
+                    <div class="stat-label">🌿 CO₂ Emission Saved</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card orange">
+                    <div class="stat-number">~<%= Math.ceil(myMeals * 0.8) %>
+                    </div>
+                    <div class="stat-label">🧑‍🤝‍🧑 People Fed</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── Credits & Rank ── -->
+        <div class="row g-3 mb-4">
+            <div class="col-md-8">
+                <div class="credits-badge h-100">
+                    <div style="font-size:3rem;">⭐</div>
+                    <div>
+                        <div style="font-size:0.8rem; opacity:0.8; text-transform:uppercase; letter-spacing:.05em;">Your
+                            Credit Score</div>
+                        <div style="font-size:2.5rem; font-weight:700; line-height:1.1;">
+                            <%= myCredits.toLocaleString() %> pts
+                        </div>
+                        <div style="font-size:0.82rem; opacity:0.85;">Earned from <%= myMeals %> meals donated → <%=
+                                    myCO2 %> kg CO₂ saved</div>
+                        <div style="font-size:0.78rem; opacity:0.7; margin-top:4px;">Formula: (meals × 10) + (CO₂ kg ×
+                            5)</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="rank-badge h-100 d-flex flex-column align-items-center justify-content-center">
+                    <div
+                        style="font-size:0.78rem; color:#856404; font-weight:600; text-transform:uppercase; letter-spacing:.05em;">
+                        Your Leaderboard Rank</div>
+                    <div style="font-size:3rem; font-weight:800; color:#333; line-height:1.1;">#<%= myRank %>
+                    </div>
+                    <div style="font-size:0.78rem; color:#666;">among all FoodLink donors</div>
+                    <button class="btn btn-warning btn-sm mt-3 fw-semibold" onclick="downloadCertificate()">
+                        📜 Download Certificate
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── Map ── -->
+        <div class="map-container mb-4">
+            <div id="donorMap" style="height:420px;"></div>
+        </div>
+
+        <!-- ── Active Listings Table ── -->
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h6 class="fw-semibold text-muted text-uppercase mb-0" style="font-size:0.8rem; letter-spacing:.04em;">
+                Active Listings</h6>
+            <a href="/listing/create" class="btn btn-success btn-sm">+ Create Listing</a>
+        </div>
+
+        <% if (total_active !==0) { %>
+            <div class="bg-white rounded-3 shadow-sm overflow-hidden mb-4">
+                <table class="table table-hover mb-0">
+                    <thead>
+                        <tr>
+                            <th>Food Item</th>
+                            <th>Quantity</th>
+                            <th>Expiry</th>
+                            <th>Pickup Address</th>
+                            <th>Phone</th>
+                            <th>Pickup Time</th>
+                            <th>Status</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% listings.forEach(listing=> { %>
+                            <tr>
+                                <td class="fw-medium">
+                                    <%= listing.food_description %>
+                                </td>
+                                <td>
+                                    <%= listing.quantity %>
+                                </td>
+                                <td class="text-muted" style="font-size:0.82rem;">
+                                    <%= new Date(listing.expiry_time).toLocaleString('en-IN', {dateStyle:'medium',
+                                        timeStyle:'short'}) %>
+                                </td>
+                                <td class="text-muted"
+                                    style="max-width:160px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
+                                    <%= listing.pickup_address %>
+                                </td>
+                                <td class="text-muted">
+                                    <%= listing.pickup_phone %>
+                                </td>
+                                <td class="text-muted" style="font-size:0.82rem;">
+                                    <%= new Date(listing.pickup_time).toLocaleString('en-IN', {dateStyle:'medium',
+                                        timeStyle:'short'}) %>
+                                </td>
+                                <td>
+                                    <% if (listing.status==='available' ) { %>
+                                        <span class="badge badge-available">Available</span>
+                                        <% } else if (listing.status==='requested' ) { %>
+                                            <span class="badge badge-requested">Requested</span>
+                                            <% } else if (listing.status==='approved' ) { %>
+                                                <span class="badge badge-approved">Approved</span>
+                                                <% } else { %>
+                                                    <span class="badge badge-picked">Picked Up</span>
+                                                    <% } %>
+                                </td>
+                                <td><a href="/listing/<%= listing.id %>"
+                                        class="btn btn-outline-secondary btn-sm">View</a></td>
+                            </tr>
+                            <% }) %>
+                    </tbody>
+                </table>
+            </div>
+            <% } else { %>
+                <div class="bg-white rounded-3 shadow-sm p-5 text-center mb-4">
+                    <div style="font-size:2.5rem;">🍱</div>
+                    <h5 class="mt-3">No active listings yet</h5>
+                    <p class="text-muted">Start donating surplus food to earn credits and climb the leaderboard!</p>
+                    <a href="/listing/create" class="btn btn-success">+ Create Listing</a>
+                </div>
+                <% } %>
+
+                    <!-- ── Leaderboard ── -->
+                    <div class="mb-3">
+                        <h6 class="fw-semibold text-muted text-uppercase mb-0"
+                            style="font-size:0.8rem; letter-spacing:.04em;">🏆 Donor Leaderboard — Top 10 by Credit
+                            Score</h6>
+                    </div>
+                    <div class="bg-white rounded-3 shadow-sm overflow-hidden">
+                        <table class="table table-hover mb-0">
+                            <thead>
+                                <tr>
+                                    <th style="width:60px;">Rank</th>
+                                    <th>Donor</th>
+                                    <th>Meals Donated</th>
+                                    <th>CO₂ Saved</th>
+                                    <th>Credit Score</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <% const medals=['🥇','🥈','🥉']; %>
+                                    <% leaderboard.forEach((donor, i)=> { %>
+                                        <tr class="leaderboard-row <%= donor.id == user.id ? 'my-row' : '' %>">
+                                            <td class="fw-bold text-center" style="font-size:1.1rem;">
+                                                <%= i < 3 ? medals[i] : (i + 1) %>
+                                            </td>
+                                            <td>
+                                                <%= donor.name %>
+                                                    <% if (donor.id==user.id) { %>
+                                                        <span class="badge bg-success ms-1"
+                                                            style="font-size:0.65rem;">You</span>
+                                                        <% } %>
+                                            </td>
+                                            <td>
+                                                <%= donor.meals %>
+                                            </td>
+                                            <td>
+                                                <%= donor.co2 %> kg
+                                            </td>
+                                            <td><strong class="text-success">
+                                                    <%= parseInt(donor.credits).toLocaleString() %> pts
+                                                </strong></td>
+                                        </tr>
+                                        <% }) %>
+                                            <% if (leaderboard.length===0) { %>
+                                                <tr>
+                                                    <td colspan="5" class="text-center text-muted py-4">No donations
+                                                        completed yet. Be the first! 🚀</td>
+                                                </tr>
+                                                <% } %>
+                            </tbody>
+                        </table>
+                    </div>
+    </div>
+
+
+    <script>
+        // Map
+        const listings = <%- JSON.stringify(listings) %>;
+        let centerLat = 20.59, centerLng = 78.96;
+        if (listings.length > 0 && listings[0].latitude) {
+            centerLat = parseFloat(listings[0].latitude);
+            centerLng = parseFloat(listings[0].longitude);
+        }
+        const map = L.map('donorMap').setView([centerLat, centerLng], 10);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+        }).addTo(map);
+
+        const statusColor = { available: '#28a745', requested: '#fd7e14', approved: '#0d6efd', picked: '#6c757d' };
+        const bounds = [];
+
+        listings.forEach(l => {
+            if (!l.latitude || !l.longitude) return;
+            const lat = parseFloat(l.latitude), lng = parseFloat(l.longitude);
+            bounds.push([lat, lng]);
+            const color = statusColor[l.status] || '#28a745';
+
+            L.circleMarker([lat, lng], { radius: 10, color, fillColor: color, fillOpacity: 0.85, weight: 2 })
+                .addTo(map)
+                .bindPopup(`
+                    <div style="min-width:180px;font-family:'Inter',sans-serif;">
+                        <div style="font-weight:700;font-size:0.9rem;margin-bottom:4px;">${l.food_description}</div>
+                        <table style="font-size:0.78rem;width:100%;">
+                            <tr><td style="color:#888;">Quantity</td><td><strong>${l.quantity}</strong></td></tr>
+                            <tr><td style="color:#888;">Status</td><td><span style="background:${color};color:white;padding:1px 6px;border-radius:3px;">${l.status}</span></td></tr>
+                            <tr><td style="color:#888;">Address</td><td>${(l.pickup_address || '').substring(0, 35)}...</td></tr>
+                        </table>
+                        <a href="/listing/${l.id}" style="display:inline-block;margin-top:6px;background:#28a745;color:white;padding:3px 10px;border-radius:4px;text-decoration:none;font-size:0.78rem;font-weight:600;">View Listing</a>
+                    </div>
+                `);
+        });
+
+        if (bounds.length > 1) map.fitBounds(bounds, { padding: [30, 30] });
+        else if (bounds.length === 1) map.setView(bounds[0], 13);
+
+
+        // Certificate download — using jsPDF native drawing (reliable)
+        function downloadCertificate() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+
+            const W = doc.internal.pageSize.getWidth();   // 297
+            const H = doc.internal.pageSize.getHeight();  // 210
+
+            // ── Background ──
+            doc.setFillColor(255, 255, 255);
+            doc.rect(0, 0, W, H, 'F');
+
+            // ── Outer green border ──
+            doc.setDrawColor(26, 122, 60);
+            doc.setLineWidth(3);
+            doc.rect(8, 8, W - 16, H - 16);
+
+            // ── Inner thin border ──
+            doc.setLineWidth(0.5);
+            doc.rect(11, 11, W - 22, H - 22);
+
+            // ── Header strip ──
+            doc.setFillColor(26, 122, 60);
+            doc.rect(8, 8, W - 16, 28, 'F');
+
+            // ── Logo + Title in header ──
+            doc.setTextColor(255, 255, 255);
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(18);
+            doc.text('FoodLink', W / 2, 19, { align: 'center' });
+            doc.setFontSize(9);
+            doc.setFont('helvetica', 'normal');
+            doc.text('Food Redistribution Platform', W / 2, 27, { align: 'center' });
+
+            // ── Main title ──
+            doc.setTextColor(26, 122, 60);
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(22);
+            doc.text('CERTIFICATE OF APPRECIATION', W / 2, 52, { align: 'center' });
+
+            // ── Subtitle line ──
+            doc.setDrawColor(26, 122, 60);
+            doc.setLineWidth(0.8);
+            doc.line(40, 55, W - 40, 55);
+
+            // ── "This certifies that" ──
+            doc.setTextColor(90, 90, 90);
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(11);
+            doc.text('This is to certify that', W / 2, 65, { align: 'center' });
+
+            // ── Donor name ──
+            doc.setTextColor(26, 122, 60);
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(24);
+            doc.text('<%= user.name %>', W / 2, 78, { align: 'center' });
+
+            // ── Description ──
+            doc.setTextColor(60, 60, 60);
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(10);
+            doc.text(
+                'has made an outstanding contribution to reducing food waste and fighting hunger in our community.',
+                W / 2, 88, { align: 'center', maxWidth: W - 60 }
+            );
+
+            // ── Stats boxes ──
+            const stats = [
+                { label: 'Meals Donated', value: '<%= myMeals %>' },
+                { label: 'People Fed', value: '~<%= Math.ceil(myMeals * 0.8) %>' },
+                { label: 'CO\u2082 Saved', value: '<%= myCO2 %> kg' },
+                { label: 'Credits Earned', value: '<%= myCredits %> pts' }
+            ];
+            const boxW = 52, boxH = 22, startX = (W - (boxW * 4 + 9 * 3)) / 2, boxY = 96;
+
+            stats.forEach((s, i) => {
+                const bx = startX + i * (boxW + 9);
+                doc.setFillColor(240, 250, 244);
+                doc.setDrawColor(180, 220, 190);
+                doc.setLineWidth(0.5);
+                doc.roundedRect(bx, boxY, boxW, boxH, 3, 3, 'FD');
+
+                doc.setTextColor(26, 122, 60);
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(14);
+                doc.text(s.value, bx + boxW / 2, boxY + 10, { align: 'center' });
+
+                doc.setTextColor(100, 100, 100);
+                doc.setFont('helvetica', 'normal');
+                doc.setFontSize(7.5);
+                doc.text(s.label, bx + boxW / 2, boxY + 18, { align: 'center' });
+            });
+
+            // ── Leaderboard rank ──
+            doc.setTextColor(90, 90, 90);
+            doc.setFont('helvetica', 'italic');
+            doc.setFontSize(9);
+            doc.text('Leaderboard Rank: #<%= myRank %> among all FoodLink donors', W / 2, 127, { align: 'center' });
+
+            // ── Date & Certificate ID ──
+            const today = new Date().toLocaleDateString('en-IN', { dateStyle: 'long' });
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(8);
+            doc.setTextColor(130, 130, 130);
+            doc.text('Issued: ' + today, W / 2, 134, { align: 'center' });
+            doc.text('Certificate ID: FL-<%= user.id %>-<%= new Date().getFullYear() %>', W / 2, 139, { align: 'center' });
+
+            // ── Signature lines ──
+            const sigY = 160, lineLen = 55;
+
+            // Left sig
+            doc.setDrawColor(50, 50, 50);
+            doc.setLineWidth(0.7);
+            doc.line(30, sigY, 30 + lineLen, sigY);
+            doc.setTextColor(50, 50, 50);
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(9);
+            doc.text('FoodLink Platform', 30 + lineLen / 2, sigY + 5, { align: 'center' });
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(7.5);
+            doc.setTextColor(120, 120, 120);
+            doc.text('Authorized Signatory', 30 + lineLen / 2, sigY + 10, { align: 'center' });
+
+            // Right sig
+            doc.setDrawColor(26, 122, 60);
+            doc.setLineWidth(0.7);
+            doc.line(W - 30 - lineLen, sigY, W - 30, sigY);
+            doc.setTextColor(26, 122, 60);
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(9);
+            doc.text('FoodLink NGO Network', W - 30 - lineLen / 2, sigY + 5, { align: 'center' });
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(7.5);
+            doc.setTextColor(120, 120, 120);
+            doc.text('Verified by Recipients', W - 30 - lineLen / 2, sigY + 10, { align: 'center' });
+
+            // ── Footer ──
+            doc.setFillColor(26, 122, 60);
+            doc.rect(8, H - 16, W - 16, 8, 'F');
+            doc.setTextColor(255, 255, 255);
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(7);
+            doc.text('FoodLink — Fighting Hunger, One Meal at a Time  |  foodlink.app', W / 2, H - 11, { align: 'center' });
+
+            doc.save('FoodLink_Certificate_<%= user.name.replace(/\s+/g, "_") %>.pdf');
+        }
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
+
 </html>

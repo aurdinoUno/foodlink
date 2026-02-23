@@ -1,18 +1,456 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
+
 <head>
-    <title>FoodLink</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FoodLink — Connecting Surplus Food with NGOs</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/style.css">
 </head>
-<body class="container mt-5">
 
-    <h1 class="text-center">FoodLink</h1>
-    <p class="text-center">Connecting Surplus Food with NGOs</p>
+<body>
 
-    <div class="text-center mt-4">
-        <a href="auth/sign-up" class="btn btn-primary">Register</a>
-        <a href="auth/login" class="btn btn-success">Login</a>
-    </div>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-success sticky-top">
+        <div class="container">
+            <a class="navbar-brand" href="/">🍃 FoodLink</a>
+            <div class="ms-auto d-flex gap-2">
+                <a href="/about" class="btn btn-outline-light btn-sm">About Us</a>
+                <a href="/auth/login" class="btn btn-outline-light btn-sm">Login</a>
+                <a href="/auth/sign-up" class="btn btn-light btn-sm fw-semibold">Get Started</a>
+            </div>
+        </div>
+    </nav>
 
+    <!-- Hero -->
+    <section class="hero-section">
+        <div class="container text-center">
+            <h1>Rescue Food. Feed Communities.</h1>
+            <p class="mt-3 mb-4">FoodLink connects hotels, restaurants & event organizers with NGOs to redistribute
+                surplus food — reducing waste and fighting hunger.</p>
+            <a href="/auth/sign-up" class="btn btn-light btn-lg fw-semibold me-2">🚀 Join FoodLink</a>
+            <a href="/auth/login" class="btn btn-outline-light btn-lg">Sign In</a>
+        </div>
+    </section>
+
+    <!-- Impact Stats Bar -->
+    <section class="py-4" style="background:#1a7a3c;">
+        <div class="container">
+            <div class="row g-3 text-white text-center">
+                <div class="col-6 col-md-3">
+                    <div style="font-size:2rem; font-weight:700;">
+                        <%= mealsSaved.toLocaleString() %>
+                    </div>
+                    <div style="font-size:0.82rem; opacity:0.85;">🍽️ Meals Saved</div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div style="font-size:2rem; font-weight:700;">
+                        <%= donorCount %>
+                    </div>
+                    <div style="font-size:0.82rem; opacity:0.85;">🏨 Active Donors</div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div style="font-size:2rem; font-weight:700;">
+                        <%= receiverCount %>
+                    </div>
+                    <div style="font-size:0.82rem; opacity:0.85;">🤝 NGOs Connected</div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div style="font-size:2rem; font-weight:700;">
+                        <%= co2Saved %> kg
+                    </div>
+                    <div style="font-size:0.82rem; opacity:0.85;">🌿 CO₂ Emission Saved</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features -->
+    <section class="py-5 bg-white">
+        <div class="container">
+            <div class="row g-4">
+                <div class="col-md-3">
+                    <div class="feature-card h-100">
+                        <div class="feature-icon">🏨</div>
+                        <h5 class="fw-semibold">For Donors</h5>
+                        <p class="text-muted small">Hotels, restaurants & grocery stores can list surplus food and track
+                            pickups in real time.</p>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="feature-card h-100">
+                        <div class="feature-icon">🤝</div>
+                        <h5 class="fw-semibold">For NGOs</h5>
+                        <p class="text-muted small">Browse listings sorted by urgency and quantity. Request pickups with
+                            a single click.</p>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="feature-card h-100">
+                        <div class="feature-icon">🗺️</div>
+                        <h5 class="fw-semibold">Live Map</h5>
+                        <p class="text-muted small">See all available food on an interactive map and plan efficient
+                            pickup routes.</p>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="feature-card h-100">
+                        <div class="feature-icon">♻️</div>
+                        <h5 class="fw-semibold">Zero Waste</h5>
+                        <p class="text-muted small">Every donation is tracked end-to-end, ensuring food reaches people
+                            who need it most.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- How it works -->
+    <section class="py-5 bg-light">
+        <div class="container text-center">
+            <h2 class="fw-bold mb-2">How It Works</h2>
+            <p class="text-muted mb-5">Simple 3-step process</p>
+            <div class="row justify-content-center g-4">
+                <div class="col-md-3">
+                    <div class="bg-white rounded-3 p-4 shadow-sm">
+                        <div class="display-6 mb-2">1️⃣</div>
+                        <h6 class="fw-bold">Register</h6>
+                        <p class="small text-muted mb-0">Sign up as a donor or receiver.</p>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="bg-white rounded-3 p-4 shadow-sm">
+                        <div class="display-6 mb-2">2️⃣</div>
+                        <h6 class="fw-bold">List or Browse</h6>
+                        <p class="small text-muted mb-0">Donors post food, receivers browse.</p>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="bg-white rounded-3 p-4 shadow-sm">
+                        <div class="display-6 mb-2">3️⃣</div>
+                        <h6 class="fw-bold">Pick Up</h6>
+                        <p class="small text-muted mb-0">Coordinate and mark pickup complete.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Top 5 Donors Leaderboard -->
+    <% if (topDonors && topDonors.length> 0) { %>
+        <section class="py-5 bg-white">
+            <div class="container">
+                <div class="text-center mb-4">
+                    <h2 class="fw-bold">🏆 Top Donors This Month</h2>
+                    <p class="text-muted">A big shoutout to our most generous contributors!</p>
+                </div>
+                <div class="row justify-content-center g-3">
+                    <% const medals=['🥇','🥈','🥉','4️⃣','5️⃣']; %>
+                        <% topDonors.forEach((donor, i)=> { %>
+                            <div class="col-md-4 col-lg-2">
+                                <div class="text-center bg-white border rounded-3 p-3 shadow-sm h-100"
+                                    style="border-color:<%= i===0?'#ffd700':i===1?'#c0c0c0':i===2?'#cd7f32':'#dee2e6' %> !important; border-width:2px !important;">
+                                    <div style="font-size:2rem;">
+                                        <%= medals[i] %>
+                                    </div>
+                                    <div class="fw-bold mt-1" style="font-size:0.95rem;">
+                                        <%= donor.name %>
+                                    </div>
+                                    <div class="text-success fw-semibold" style="font-size:1.1rem;">
+                                        <%= donor.total_donated %>
+                                    </div>
+                                    <div class="text-muted" style="font-size:0.75rem;">meals donated</div>
+                                </div>
+                            </div>
+                            <% }) %>
+                </div>
+            </div>
+        </section>
+        <% } %>
+
+            <!-- FAQ Section -->
+            <section class="py-5 bg-light">
+                <div class="container">
+                    <div class="row justify-content-center">
+                        <div class="col-md-8">
+                            <div class="text-center mb-4">
+                                <h2 class="fw-bold">❓ Frequently Asked Questions</h2>
+                                <p class="text-muted">Everything you need to know about FoodLink</p>
+                            </div>
+                            <div class="accordion" id="faqAccordion">
+                                <div class="accordion-item border mb-2 rounded-3 overflow-hidden">
+                                    <h2 class="accordion-header">
+                                        <button class="accordion-button fw-medium" type="button"
+                                            data-bs-toggle="collapse" data-bs-target="#faq1">
+                                            Who can register as a donor?
+                                        </button>
+                                    </h2>
+                                    <div id="faq1" class="accordion-collapse collapse show"
+                                        data-bs-parent="#faqAccordion">
+                                        <div class="accordion-body text-muted">Any food business or individual with
+                                            surplus food can register — hotels, restaurants, caterers, grocery stores,
+                                            event organizers, and even home cooks.</div>
+                                    </div>
+                                </div>
+                                <div class="accordion-item border mb-2 rounded-3 overflow-hidden">
+                                    <h2 class="accordion-header">
+                                        <button class="accordion-button collapsed fw-medium" type="button"
+                                            data-bs-toggle="collapse" data-bs-target="#faq2">
+                                            Is the food guaranteed to be safe?
+                                        </button>
+                                    </h2>
+                                    <div id="faq2" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                        <div class="accordion-body text-muted">Donors provide FSSAI registration details
+                                            and expiry information for every listing. NGOs can review this before
+                                            claiming a pickup.</div>
+                                    </div>
+                                </div>
+                                <div class="accordion-item border mb-2 rounded-3 overflow-hidden">
+                                    <h2 class="accordion-header">
+                                        <button class="accordion-button collapsed fw-medium" type="button"
+                                            data-bs-toggle="collapse" data-bs-target="#faq3">
+                                            How does pickup work?
+                                        </button>
+                                    </h2>
+                                    <div id="faq3" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                        <div class="accordion-body text-muted">An NGO claims a listing, the donor
+                                            approves the pickup, and the receiver can then coordinate directly using the
+                                            contact details provided. After pickup, the NGO marks it as complete.</div>
+                                    </div>
+                                </div>
+                                <div class="accordion-item border mb-2 rounded-3 overflow-hidden">
+                                    <h2 class="accordion-header">
+                                        <button class="accordion-button collapsed fw-medium" type="button"
+                                            data-bs-toggle="collapse" data-bs-target="#faq4">
+                                            Is FoodLink free to use?
+                                        </button>
+                                    </h2>
+                                    <div id="faq4" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                        <div class="accordion-body text-muted">Yes! FoodLink is completely free for both
+                                            donors and receivers. Our goal is to reduce waste and fight hunger — not
+                                            make a profit.</div>
+                                    </div>
+                                </div>
+                                <div class="accordion-item border mb-2 rounded-3 overflow-hidden">
+                                    <h2 class="accordion-header">
+                                        <button class="accordion-button collapsed fw-medium" type="button"
+                                            data-bs-toggle="collapse" data-bs-target="#faq5">
+                                            How is CO₂ saving calculated?
+                                        </button>
+                                    </h2>
+                                    <div id="faq5" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                        <div class="accordion-body text-muted">We estimate that each meal saves
+                                            approximately 0.5 kg of food from landfill, which prevents roughly 1.25 kg
+                                            of CO₂ equivalent emissions (methane from food decomposition).</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Compost Advisor -->
+            <section class="compost-section" id="compost-advisor">
+                <div class="compost-inner">
+                    <span class="badge bg-success mb-3">🤖 AI-Powered Feature</span>
+                    <h2 class="fw-bold mb-2">♻️ Compost Advisor</h2>
+                    <p class="text-muted mb-4">Have food waste that can't be donated? Describe it below and our AI will
+                        give you
+                        composting instructions.</p>
+
+                    <div class="compost-card">
+                        <div class="compost-input-row">
+                            <input type="text" id="wasteInput"
+                                placeholder="e.g. banana peels, coffee grounds, leftover rice..." maxlength="200">
+                            <button id="compostBtn" onclick="getCompostAdvice()">
+                                <span id="btnText">Get Advice →</span>
+                            </button>
+                        </div>
+                        <p class="text-muted small mt-2">Press Enter or click the button. Works best with specific
+                            items.</p>
+
+                        <div id="compostResult" style="display:none;">
+                            <div class="compost-result-header">
+                                <span>🌱 Composting Instructions</span>
+                                <button class="compost-reset" onclick="resetCompost()">✕ Clear</button>
+                            </div>
+                            <div id="compostAnswer" class="compost-answer"></div>
+                        </div>
+
+                        <div id="compostError" style="display:none;" class="compost-error">
+                            ⚠️ <span id="errorMsg"></span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+
+            <script>
+                async function getCompostAdvice() {
+                    const input = document.getElementById('wasteInput').value.trim();
+                    if (!input) { document.getElementById('wasteInput').focus(); return; }
+
+                    const btn = document.getElementById('compostBtn');
+                    const btnText = document.getElementById('btnText');
+                    const result = document.getElementById('compostResult');
+                    const error = document.getElementById('compostError');
+
+                    result.style.display = 'none';
+                    error.style.display = 'none';
+                    btn.disabled = true;
+                    btnText.textContent = '⏳ Thinking...';
+
+                    try {
+                        const res = await fetch('/api/compost', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ waste_item: input })
+                        });
+
+                        if (!res.ok) {
+                            const errData = await res.json().catch(() => ({}));
+                            throw new Error(errData.error || `Server error (${res.status})`);
+                        }
+
+                        const data = await res.json();
+                        let formatted = (data.answer || 'No advice returned.')
+                            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                            .replace(/\n/g, '<br>');
+
+                        document.getElementById('compostAnswer').innerHTML = formatted;
+                        result.style.display = 'block';
+                    } catch (err) {
+                        document.getElementById('errorMsg').textContent = err.message;
+                        error.style.display = 'block';
+                    } finally {
+                        btn.disabled = false;
+                        btnText.textContent = 'Get Advice →';
+                    }
+                }
+
+                function resetCompost() {
+                    document.getElementById('compostResult').style.display = 'none';
+                    document.getElementById('compostError').style.display = 'none';
+                    document.getElementById('wasteInput').value = '';
+                    document.getElementById('wasteInput').focus();
+                }
+
+                document.getElementById('wasteInput').addEventListener('keydown', e => {
+                    if (e.key === 'Enter') getCompostAdvice();
+                });
+            </script>
+
+            <!-- Chef AI Recipe Section -->
+            <section class="compost-section" id="chef-advisor"
+                style="background: linear-gradient(135deg, #fff8e1 0%, #fffde7 100%); border-color: #ffe082;">
+                <div class="compost-inner">
+                    <span class="badge mb-3" style="background:#ff8f00; color:white;">🍳 AI-Powered Feature</span>
+                    <h2 class="fw-bold mb-2">🍽️ Chef AI — Recipe Generator</h2>
+                    <p class="text-muted mb-4">Have surplus food that can't be donated? Enter your available ingredients
+                        and our
+                        AI chef will suggest a recipe to use them up before they go to waste.</p>
+
+                    <div class="compost-card" style="border-color: #ffe082;">
+                        <div class="mb-3">
+                            <label class="form-label fw-medium" style="font-size:0.85rem;">Ingredients <span
+                                    class="text-muted fw-normal">(comma-separated)</span></label>
+                            <div class="compost-input-row">
+                                <input type="text" id="chefIngredients"
+                                    placeholder="e.g. leftover rice, tomatoes, onions, eggs..." maxlength="300"
+                                    style="border-color:#ffc107;">
+                                <button id="chefBtn" onclick="getRecipe()" style="background:#ff8f00;">
+                                    <span id="chefBtnText">Get Recipe →</span>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label fw-medium" style="font-size:0.85rem;">Dietary Constraints <span
+                                    class="text-muted fw-normal">(optional)</span></label>
+                            <input type="text" id="chefConstraints" class="form-control form-control-sm"
+                                placeholder="e.g. vegetarian, no gluten, low-calorie..." style="border-color:#ffc107;">
+                        </div>
+                        <p class="text-muted small mb-0">Press Enter on ingredients or click the button.</p>
+
+                        <div id="chefResult" style="display:none;">
+                            <div class="compost-result-header" style="color:#e65100;">
+                                <span>👨‍🍳 Suggested Recipe</span>
+                                <button class="compost-reset" onclick="resetRecipe()">✕ Clear</button>
+                            </div>
+                            <div id="chefAnswer" class="compost-answer" style="border-color:#ffe082;"></div>
+                        </div>
+
+                        <div id="chefError" style="display:none;" class="compost-error">
+                            ⚠️ <span id="chefErrorMsg"></span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <footer class="bg-success text-white text-center py-3">
+                <small>© 2025 FoodLink — Built with ❤️ to fight hunger</small>
+            </footer>
+
+            <script>
+                async function getRecipe() {
+                    const ingredients = document.getElementById('chefIngredients').value.trim();
+                    const constraints = document.getElementById('chefConstraints').value.trim();
+                    if (!ingredients) { document.getElementById('chefIngredients').focus(); return; }
+
+                    const btn = document.getElementById('chefBtn');
+                    const btnText = document.getElementById('chefBtnText');
+                    const result = document.getElementById('chefResult');
+                    const error = document.getElementById('chefError');
+
+                    result.style.display = 'none';
+                    error.style.display = 'none';
+                    btn.disabled = true;
+                    btnText.textContent = '⏳ Cooking...';
+
+                    try {
+                        const res = await fetch('/api/recipe', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ ingredients, constraints: constraints || 'None' })
+                        });
+
+                        if (!res.ok) {
+                            const errData = await res.json().catch(() => ({}));
+                            throw new Error(errData.error || `Server error (${res.status})`);
+                        }
+
+                        const data = await res.json();
+                        let formatted = (data.recipe || 'No recipe returned.')
+                            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                            .replace(/^#+\s(.+)/gm, '<strong style="font-size:1rem">$1</strong>')
+                            .replace(/\n/g, '<br>');
+
+                        document.getElementById('chefAnswer').innerHTML = formatted;
+                        result.style.display = 'block';
+                    } catch (err) {
+                        document.getElementById('chefErrorMsg').textContent = err.message;
+                        error.style.display = 'block';
+                    } finally {
+                        btn.disabled = false;
+                        btnText.textContent = 'Get Recipe →';
+                    }
+                }
+
+                function resetRecipe() {
+                    document.getElementById('chefResult').style.display = 'none';
+                    document.getElementById('chefError').style.display = 'none';
+                    document.getElementById('chefIngredients').value = '';
+                    document.getElementById('chefConstraints').value = '';
+                    document.getElementById('chefIngredients').focus();
+                }
+
+                document.getElementById('chefIngredients').addEventListener('keydown', e => {
+                    if (e.key === 'Enter') getRecipe();
+                });
+            </script>
+
+            <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
+
 </html>
