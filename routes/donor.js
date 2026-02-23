@@ -10,7 +10,9 @@ router.get("/dashboard", async (req, res) => {
 
     const listings = (await pool.query("SELECT * FROM listings WHERE donor_id = ($1) AND status IN ('available', 'requested') ORDER BY created_at DESC", [donorId])).rows;
 
-    res.render("donor_dashboard", {listings: listings});
+    const total_active = parseInt((await pool.query("SELECT COUNT(*) FROM listings WHERE donor_id = ($1) AND status IN ('available', 'requested')", [donorId])).rows[0].count);
+
+    res.render("donor_dashboard", {listings: listings, total_active: total_active});
 });
 
 router.get("/history", async (req, res) => {

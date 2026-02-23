@@ -17,26 +17,27 @@ router.post("/create", async (req, res) => {
 });
 
 router.get("/:id", async (req, res) => {
-    const ListingId = req.params.id;
+    const listingId = req.params.id;
 
     const listing = (await pool.query("SELECT * FROM listings WHERE id = ($1)", [listingId])).rows[0];
     const pickup_request = (await pool.query("SELECT * FROM pickup_requests WHERE listing_id = ($1)", [listingId])).rows[0];
 
-    res.render("listing_details", {listing: listing, pickup_request: pickup_request})
+    res.render("listing_details", {listing: listing, pickup_request: pickup_request, user_role: req.session.user.role})
 })
 
-router.post("/request/:id", async (req, res) => {
+router.post("/:id/request", async (req, res) => {
     const listingId = req.params.id;
     const receiver = req.session.user;
+    console.log(req.session.user);
 
-    await pool.query("INSERT INTO pickup_requests(listing_id, ngo_id, contact_person, contact_phone) VALUES ($1,$2,$3,$4)", [listingId, receiver.id, receiver.name, receiver.phone]);
+    await pool.query("INSERT INTO pickup_requests(listing_id, receiver_id, contact_person, contact_phone) VALUES ($1,$2,$3,$4)", [listingId, receiver.id, receiver.name, receiver.phone]);
 
-    await pool.query("UPDATE listings SET status = 'requested', receiver_id = ($2) WHERE id= ($1)", [listingId, ngo.id]);
+    await pool.query("UPDATE listings SET status = 'requested', receiver_id = ($2) WHERE id= ($1)", [listingId, receiver.id]);
 
     res.redirect("/receiver/dashboard");
 });
 
-router.post("/approve/:id", async (req, res) => {
+router.post("/:id/approve", async (req, res) => {
     const listingId = req.params.id;
 
     await pool.query("UPDATE listings SET status='approved' WHERE id = ($1)", [listingId]);
@@ -45,7 +46,7 @@ router.post("/approve/:id", async (req, res) => {
     res.redirect("/donor/dashboard");
 });
 
-router.post("/complete/:id", async (req, res) => {
+router.post("/:id/complete", async (req, res) => {
     const listingId = req.params.id;
 
     await pool.query("UPDATE listings SET status='picked' WHERE id = ($1)", [listingId]);

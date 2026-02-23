@@ -22,6 +22,7 @@
             <th>Pickup Phone</th>
             <th>Pickup Time</th>
             <th>Status</th>
+            <th>Details</th>
         </tr>
     </thead>
     <tbody>
@@ -43,6 +44,7 @@
                         <span class="badge bg-warning">Pending</span>
                     <% } %>
                 </td>
+                <td><a href="/listing/<%= req.id %>">See More</a></td>
             </tr>
         <% }) %>
     </tbody>

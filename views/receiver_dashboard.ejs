@@ -31,32 +31,22 @@
     </thead>
     <tbody>
     <% listings.forEach((listing) => { %>
-        <% if (listing.status === "available" ){ %>
-            <tr>
-                <td><%= listing.donor_name %></td>
-                <td><%= listing.food_description %></td>
-                <td><%= listing.quantity %></td>
-                <td><%= listing.expiry_time %></td>
-                <td><%= listing.pickup_address %></td>
-                <td><%= listing.phone %></td>
-                <td><%= listing.pickup_time %></td>
-                <td><%= listing.status %></td>
-                <td>
-                    <% if (listing.status === "available"){ %>
-                        <form method="POST" action="/listing/request/<%= listing.id %>">
-                            <button class="btn btn-primary btn-sm">Request Pickup</button>
-                        </form>
-                    <% } else { %>
-                        <p>N/A</p>
-                    <% } %>
-                </td>
-            </tr>
-        <% } %>
+        <tr>
+            <td><%= listing.donor_name %></td>
+            <td><%= listing.food_description %></td>
+            <td><%= listing.quantity %></td>
+            <td><%= listing.expiry_time %></td>
+            <td><%= listing.pickup_address %></td>
+            <td><%= listing.pickup_phone %></td>
+            <td><%= listing.pickup_time %></td>
+            <td><%= listing.status %></td>
+            <td><a href="/listing/<%= listing.id %>">See More</a></td>
+        </tr>
     <% }) %>
     </tbody>
     </table>
 <% } else if (total_available === 0){ %>
-    <p>Listings are not available!</p>
+    <p>No avialabe listings!</p>
 <% } %>
 
 <script>
