@@ -1,0 +1,245 @@
+<!-- <!DOCTYPE html>
+<html>
+<head>
+    <title>Register</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="container mt-5">
+
+<h2>Register</h2>
+
+<form method="POST" action="/auth/sign-up">
+
+    <div class="mb-3">
+        <label>Name / Organization</label>
+        <input type="text" name="name" class="form-control" required>
+    </div>
+
+    <div class="mb-3">
+        <label>Email</label>
+        <input type="email" name="email" class="form-control" required>
+    </div>
+
+    <div class="mb-3">
+        <label>Password</label>
+        <input type="password" name="password" class="form-control" required>
+    </div>
+
+    <div class="mb-3">
+        <label>Phone</label>
+        <input type="text" name="phone" class="form-control" required>
+    </div>
+
+    <div class="mb-3">
+        <label>Address</label>
+        <textarea name="address" class="form-control" required></textarea>
+    </div>
+
+    <div class="mb-3">
+        <label>Role</label>
+        <select name="role" class="form-control" onchange="toggleFields()" required>
+            <option value="donor">Donor</option>
+            <option value="receiver">Receiver</option>
+        </select>
+    </div>
+
+    <div id="donor-fields">
+        <div class="mb-3">
+            <label>Donor Type</label>
+            <select name="donor_subtype" class="form-control" required>
+                <option value="hotel">Donor</option>
+                <option value="resturant">Resturant</option>
+                <option value="event_organiser">Event Organiser</option>
+                <option value="grocery_store">Grocery Store</option>
+                <option value="individual">Grocery Store</option>
+            </select>
+        </div>
+
+        <div class="mb-3">
+            <label>Fssai ID</label>
+            <input type="text" name="fssai_id" class="form-control" required>
+        </div>
+    </div>
+
+    <div id="receiver-fields" class="hidden">
+        <div class="mb-3">
+            <label>Receiver Type</label>
+            <select name="receiver_subtype" class="form-control" required>
+                <option value="ngo">NGO</option>
+                <option value="individual">Individual</option>
+            </select>
+        </div>
+
+        <div class="mb-3">
+            <label>Govt ID</label>
+            <input type="text" name="govt_id" class="form-control" required>
+        </div>
+    </div>
+
+    <div class="mb-3">
+        <label>District</label>
+        <input type="text" name="district" class="form-control" required>
+    </div>
+
+    <div class="mb-3">
+        <label>State</label>
+        <input type="text" name="state" class="form-control" required>
+    </div>
+
+    <div class="mb-3">
+        <label>Pincode</label>
+        <input type="text" name="pincode" class="form-control" required>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Register</button>
+</form>
+
+<script>
+    function toggleFields() {
+        const role = document.getElementById('role').value;
+        const donorFields = document.getElementById('donor-fields');
+        const receiverFields = document.getElementById('receiver-fields');
+
+        if (role === 'donor') {
+            donorFields.classList.remove('hidden');
+            receiverFields.classList.add('hidden');
+        } else {
+            donorFields.classList.add('hidden');
+            receiverFields.classList.remove('hidden');
+        }
+    }
+</script>
+
+</body>
+</html> -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Register</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="container mt-5 mb-5">
+
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <h2 class="mb-4">Register</h2>
+
+        <form method="POST" action="/auth/sign-up" id="registrationForm">
+
+            <div class="mb-3">
+                <label class="form-label">Name / Organization</label>
+                <input type="text" name="name" class="form-control" required>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Email</label>
+                <input type="email" name="email" class="form-control" required>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Password</label>
+                <input type="password" name="password" class="form-control" required>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Phone</label>
+                <input type="text" name="phone" class="form-control" required>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Address</label>
+                <textarea name="address" class="form-control" rows="2" required></textarea>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Role</label>
+                <select name="role" id="role" class="form-select" onchange="toggleFields()" required>
+                    <option value="donor">Donor</option>
+                    <option value="receiver">Receiver</option>
+                </select>
+            </div>
+
+            <hr>
+
+            <div id="donor-fields">
+                <div class="mb-3">
+                    <label class="form-label">Donor Type</label>
+                    <select name="donor_subtype" class="form-select toggle-required">
+                        <option value="hotel">Hotel</option>
+                        <option value="restaurant">Restaurant</option>
+                        <option value="event_organiser">Event Organiser</option>
+                        <option value="grocery_store">Grocery Store</option>
+                        <option value="individual">Individual</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">FSSAI ID</label>
+                    <input type="text" name="fssai_id" class="form-control toggle-required">
+                </div>
+            </div>
+
+            <div id="receiver-fields" class="d-none">
+                <div class="mb-3">
+                    <label class="form-label">Receiver Type</label>
+                    <select name="receiver_subtype" class="form-select">
+                        <option value="ngo">NGO</option>
+                        <option value="individual">Individual</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Govt ID</label>
+                    <input type="text" name="govt_id" class="form-control">
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">District</label>
+                    <input type="text" name="district" class="form-control" required>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">State</label>
+                    <input type="text" name="state" class="form-control" required>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">Pincode</label>
+                    <input type="text" name="pincode" class="form-control" required>
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary w-100 mt-3">Register</button>
+        </form>
+    </div>
+</div>
+
+<script>
+    function toggleFields() {
+        const role = document.getElementById('role').value;
+        const donorFields = document.getElementById('donor-fields');
+        const receiverFields = document.getElementById('receiver-fields');
+        
+        const donorInputs = donorFields.querySelectorAll('input, select');
+        const receiverInputs = receiverFields.querySelectorAll('input, select');
+
+        if (role === 'donor') {
+            donorFields.classList.remove('d-none');
+            receiverFields.classList.add('d-none');
+            
+            donorInputs.forEach(el => el.required = true);
+            receiverInputs.forEach(el => el.required = false);
+        } else {
+            donorFields.classList.add('d-none');
+            receiverFields.classList.remove('d-none');
+            
+            donorInputs.forEach(el => el.required = false);
+            receiverInputs.forEach(el => el.required = true);
+        }
+    }
+
+    window.onload = toggleFields;
+</script>
+
+</body>
+</html>
