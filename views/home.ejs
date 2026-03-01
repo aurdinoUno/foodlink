@@ -422,8 +422,13 @@
 
                         const data = await res.json();
                         let formatted = (data.recipe || 'No recipe returned.')
+                            .replace(/^###\s*(.+)$/gm, '<h6 class="fw-bold mt-3 mb-1">$1</h6>')
+                            .replace(/^##\s*(.+)$/gm, '<h5 class="fw-bold mt-3 mb-1">$1</h5>')
+                            .replace(/^#\s*(.+)$/gm, '<h4 class="fw-bold mt-3 mb-1">$1</h4>')
                             .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-                            .replace(/^#+\s(.+)/gm, '<strong style="font-size:1rem">$1</strong>')
+                            .replace(/\*((?!\*)[^*]+)\*/g, '<em>$1</em>')
+                            .replace(/^[\*\-]\s+(.+)$/gm, '<li>$1</li>')
+                            .replace(/(<li>.*<\/li>)/gs, '<ul class="ps-3 mb-1">$1</ul>')
                             .replace(/\n/g, '<br>');
 
                         document.getElementById('chefAnswer').innerHTML = formatted;

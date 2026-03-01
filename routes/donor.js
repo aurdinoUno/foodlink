@@ -6,7 +6,6 @@ const router = Router();
 router.get("/dashboard", async (req, res) => {
     const donorId = req.session.user.id;
 
-    // Active listings
     const listings = (await pool.query(
         "SELECT * FROM listings WHERE donor_id = $1 AND status IN ('available', 'requested', 'approved') ORDER BY created_at DESC",
         [donorId]
@@ -14,17 +13,14 @@ router.get("/dashboard", async (req, res) => {
 
     const total_active = listings.length;
 
-    // Personal stats — meals donated (picked up)
     const statsRes = await pool.query(
         "SELECT COALESCE(SUM(quantity::int), 0) AS meals FROM listings WHERE donor_id = $1 AND status = 'picked'",
         [donorId]
     );
     const myMeals = parseInt(statsRes.rows[0].meals) || 0;
     const myCO2 = (myMeals * 1.25).toFixed(1);
-    // Credit score: 10 pts per meal + 5 pts per kg CO2 saved
     const myCredits = Math.round(myMeals * 10 + parseFloat(myCO2) * 5);
 
-    // Leaderboard — all donors ranked by credit score
     const leaderboardRes = await pool.query(`
         SELECT u.id, u.name,
                COALESCE(SUM(l.quantity::int), 0) AS meals,
@@ -38,7 +34,6 @@ router.get("/dashboard", async (req, res) => {
         LIMIT 10
     `);
 
-    // My rank in leaderboard
     const myRankRes = await pool.query(`
         SELECT rank FROM (
             SELECT u.id,

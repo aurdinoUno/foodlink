@@ -28,7 +28,6 @@ router.get("/:id", async (req, res) => {
 router.post("/:id/request", async (req, res) => {
     const listingId = req.params.id;
     const receiver = req.session.user;
-    console.log(req.session.user);
 
     await pool.query("INSERT INTO pickup_requests(listing_id, receiver_id, contact_person, contact_phone) VALUES ($1,$2,$3,$4)", [listingId, receiver.id, receiver.name, receiver.phone]);
 

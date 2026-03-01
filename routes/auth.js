@@ -22,7 +22,6 @@ router.post("/sign-up", async (req, res) => {
         district, state, pincode
     ];
 
-    // await pool.query("INSERT INTO users(name, email, password, phone, address, role, donor_subtype, fssai_id, receiver_subtype, govt_id, district, state, pincode) VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)", [name, email, hashedPassword, phone, address, role, donor_subtype, fssai_id, receiver_subtype, govt_id, district, state, pincode]);
     await pool.query("INSERT INTO users(name, email, password, phone, address, role, donor_subtype, fssai_id, receiver_subtype, govt_id, district, state, pincode) VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)", values);
 
     res.redirect("/auth/login");

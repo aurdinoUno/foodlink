@@ -226,16 +226,16 @@
     </div>
 
     <script>
-        const listings = <% - JSON.stringify(listings) %>;
+        const allListings =  <%- JSON.stringify(listings) %>;
         let userLat = null, userLng = null;
         let map, userMarker, routeLine;
         const markers = {};
 
         // ── MAP SETUP ──────────────────────────────────────────────────────────
         let centerLat = 20.59, centerLng = 78.96;
-        if (listings.length > 0 && listings[0].latitude) {
-            centerLat = parseFloat(listings[0].latitude);
-            centerLng = parseFloat(listings[0].longitude);
+        if (allListings.length > 0 && allListings[0].latitude) {
+            centerLat = parseFloat(allListings[0].latitude);
+            centerLng = parseFloat(allListings[0].longitude);
         }
 
         map = L.map('map').setView([centerLat, centerLng], 10);
@@ -250,7 +250,7 @@
 
         // Draw all listing markers
         const bounds = [];
-        listings.forEach(l => {
+        allListings.forEach(l => {
             if (!l.latitude || !l.longitude) return;
             const lat = parseFloat(l.latitude), lng = parseFloat(l.longitude);
             bounds.push([lat, lng]);
@@ -416,7 +416,7 @@
 
         // Default: urgency sort active
         document.getElementById('btn-urgency').classList.remove('btn-outline-secondary');
-        document.getElementById('btn-urgency').classList.add('btn-success');
+        document.getElementById('btn-urgency').classList.adtn-su;
     </script>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>

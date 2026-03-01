@@ -3,28 +3,23 @@ const pool = require("../config/pool");
 
 const router = Router();
 
-// ── Urgency scoring helper ──────────────────────────────────────────────
-// Returns a score 0-130. Higher = more urgent.
 function urgencyScore(listing) {
     const hoursLeft = (new Date(listing.expiry_time) - Date.now()) / 3600000;
     const qty = parseInt(listing.quantity) || 0;
 
-    // Time score (max 100)
     let timeScore;
-    if (hoursLeft <= 0) timeScore = 130; // already expired — still show first
+    if (hoursLeft <= 0) timeScore = 130;
     else if (hoursLeft <= 2) timeScore = 100;
     else if (hoursLeft <= 6) timeScore = 70;
     else if (hoursLeft <= 12) timeScore = 50;
     else if (hoursLeft <= 24) timeScore = 30;
     else timeScore = 10;
 
-    // Quantity score (max 30)
     const quantityScore = Math.min(qty / 2, 30);
 
     return timeScore + quantityScore;
 }
 
-// Urgency label for display
 function urgencyLabel(score) {
     if (score >= 100) return { label: 'CRITICAL', color: '#dc3545' };
     if (score >= 70) return { label: 'HIGH', color: '#fd7e14' };
@@ -40,7 +35,6 @@ router.get("/dashboard", async (req, res) => {
 
     const total_available = listings.length;
 
-    // Attach urgency score and label to every listing
     listings.forEach(l => {
         l.urgency_score = urgencyScore(l);
         const u = urgencyLabel(l.urgency_score);
@@ -48,7 +42,6 @@ router.get("/dashboard", async (req, res) => {
         l.urgency_color = u.color;
     });
 
-    // Sort by urgency descending (highest urgency first)
     listings.sort((a, b) => b.urgency_score - a.urgency_score);
 
     res.render("receiver_dashboard", { listings, total_available, user: req.session.user });

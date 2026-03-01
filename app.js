@@ -6,6 +6,8 @@ const pool = require("./config/pool");
 
 const app = express();
 
+app.use('/uploads', express.static('uploads'));
+
 const HOST_NAME = "0.0.0.0";
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, HOST_NAME, () => {
@@ -56,28 +58,33 @@ app.post("/api/compost", async (req, res) => {
     }
 });
 
-// Proxy for the Chef AI recipe service
 app.post("/api/recipe", async (req, res) => {
     try {
         const { ingredients, constraints } = req.body;
         if (!ingredients) return res.status(400).json({ error: "ingredients is required" });
 
-        // Accept comma-separated string or array
         const ingredientArr = Array.isArray(ingredients)
             ? ingredients
             : ingredients.split(",").map(s => s.trim()).filter(Boolean);
 
-        const aiRes = await fetch("https://chef-ai-yt2x.onrender.com/recommend", {
+        const aiRes = await fetch("https://recipe-ai-alqa.onrender.com/recommend", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ ingredients: ingredientArr, constraints: constraints || "None" })
         });
 
         const text = await aiRes.text();
-        // API returns a plain string, wrap it
         try {
             const json = JSON.parse(text);
-            res.status(aiRes.status).json({ recipe: typeof json === 'string' ? json : JSON.stringify(json) });
+            let recipe;
+            if (typeof json === 'string') {
+                recipe = json;
+            } else if (json && typeof json === 'object') {
+                recipe = Object.values(json).find(v => typeof v === 'string') || JSON.stringify(json);
+            } else {
+                recipe = String(json);
+            }
+            res.status(aiRes.status).json({ recipe });
         } catch {
             res.status(aiRes.status).json({ recipe: text });
         }
@@ -90,16 +97,13 @@ app.get("/about", (req, res) => res.render("about"));
 
 app.use("/", async (req, res) => {
     try {
-        // Meals saved = sum of quantity from listings that were picked up
         const mealsSavedRes = await pool.query(
             "SELECT COALESCE(SUM(quantity::int), 0) AS meals FROM listings WHERE status = 'picked'"
         );
 
-        // Donor & receiver counts
         const donorCountRes = await pool.query("SELECT COUNT(*) AS cnt FROM users WHERE role = 'donor'");
         const receiverCountRes = await pool.query("SELECT COUNT(*) AS cnt FROM users WHERE role = 'receiver'");
 
-        // Top 5 donors by total quantity donated (picked up)
         const topDonorsRes = await pool.query(`
             SELECT u.name, COALESCE(SUM(l.quantity::int), 0) AS total_donated
             FROM users u
@@ -113,7 +117,6 @@ app.use("/", async (req, res) => {
         const mealsSaved = parseInt(mealsSavedRes.rows[0].meals) || 0;
         const donorCount = parseInt(donorCountRes.rows[0].cnt) || 0;
         const receiverCount = parseInt(receiverCountRes.rows[0].cnt) || 0;
-        // Approx CO2: 1 meal ≈ 0.5 kg food saved ≈ 1.25 kg CO2 equivalent
         const co2Saved = (mealsSaved * 1.25).toFixed(0);
 
         res.render("home", {
